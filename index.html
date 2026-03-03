@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eigen Ecosystem</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --background: #0a0a0f;
+      --foreground: #f0f0f5;
+      --accent: #6366f1;
+      --card-bg: #13131a;
+      --card-border: rgba(255,255,255,0.06);
+      --muted: #8b8b9e;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    a { text-decoration: none; }
+
+    /* Hero */
+    .hero { position: relative; overflow: hidden; }
+    .hero-glow {
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative; z-index: 10;
+      max-width: 1152px; margin: 0 auto;
+      padding: 80px 24px 64px; text-align: center;
+    }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: 9999px; padding: 6px 16px; margin-bottom: 32px;
+      font-size: 14px; font-weight: 500;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: #a5b4fc;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #818cf8;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.05; margin-bottom: 24px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-desc {
+      max-width: 672px; margin: 0 auto 40px;
+      font-size: clamp(1rem, 2vw, 1.25rem); line-height: 1.7; color: var(--muted);
+    }
+    .hero-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+    .btn-primary {
+      padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 15px;
+      color: #fff; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      box-shadow: 0 0 30px rgba(99,102,241,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(99,102,241,0.4); }
+    .btn-secondary {
+      padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 15px;
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      color: var(--foreground); cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn-secondary:hover { transform: scale(1.05); }
+
+    /* Tabs nav */
+    .tab-nav {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--card-border);
+    }
+    .tab-nav-inner { max-width: 1152px; margin: 0 auto; padding: 0 24px; display: flex; gap: 4px; }
+    .tab-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 16px 20px; font-size: 14px; font-weight: 500;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); position: relative; transition: color 0.2s;
+    }
+    .tab-btn.active { color: var(--foreground); }
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px;
+    }
+
+    /* Tab content */
+    .tab-content { max-width: 1152px; margin: 0 auto; padding: 48px 24px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Section header */
+    .section-header { margin-bottom: 40px; }
+    .section-header h2 { font-size: 1.875rem; font-weight: 700; margin-bottom: 12px; }
+    .section-header p { font-size: 1rem; max-width: 672px; line-height: 1.7; color: var(--muted); }
+
+    /* Cards grid */
+    .grid-3 { display: grid; gap: 20px; grid-template-columns: 1fr; }
+    @media(min-width:640px){ .grid-3 { grid-template-columns: repeat(2,1fr); } }
+    @media(min-width:1024px){ .grid-3 { grid-template-columns: repeat(3,1fr); } }
+
+    .card {
+      border-radius: 16px; padding: 24px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 60px rgba(99,102,241,0.15);
+      border-color: rgba(99,102,241,0.4);
+    }
+
+    /* Agent card */
+    .agent-card { display: flex; flex-direction: column; gap: 16px; }
+    .agent-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+    }
+    .agent-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .agent-desc { font-size: 0.875rem; line-height: 1.6; color: var(--muted); }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem;
+      background: rgba(255,255,255,0.04); color: var(--muted);
+      border: 1px solid var(--card-border);
+    }
+    .agent-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 4px; }
+    .agent-builder { font-size: 0.75rem; color: var(--muted); }
+    .agent-builder a { font-weight: 600; color: var(--foreground); }
+    .agent-builder a:hover { opacity: 0.7; }
+    .link-btns { display: flex; gap: 8px; }
+    .link-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600;
+      text-decoration: none; transition: opacity 0.2s;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--foreground);
+    }
+    .link-btn:hover { opacity: 0.8; }
+    .link-btn.site-btn { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.35); color: #a5b4fc; }
+
+    /* Search */
+    .search-wrap { position: relative; margin-bottom: 32px; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+    .search-input {
+      width: 100%; border-radius: 12px; padding: 12px 16px 12px 44px;
+      font-size: 0.875rem; outline: none;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      color: var(--foreground); transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: rgba(99,102,241,0.5); }
+    .search-input::placeholder { color: var(--muted); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 96px 0; }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { color: var(--muted); font-weight: 500; margin-bottom: 20px; }
+    .clear-btn {
+      border-radius: 12px; padding: 8px 20px; font-size: 0.875rem; font-weight: 600;
+      background: rgba(99,102,241,0.12); color: #a5b4fc;
+      border: 1px solid rgba(99,102,241,0.25); cursor: pointer; transition: opacity 0.2s;
+    }
+    .clear-btn:hover { opacity: 0.8; }
+
+    /* CTA banner */
+    .cta-banner {
+      margin-top: 48px; border-radius: 16px; padding: 32px; text-align: center;
+      background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(168,85,247,0.07));
+      border: 1px solid rgba(99,102,241,0.15);
+    }
+    .cta-banner .cta-icon { font-size: 2rem; margin-bottom: 12px; }
+    .cta-banner h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 8px; }
+    .cta-banner p { font-size: 0.875rem; max-width: 384px; margin: 0 auto 20px; line-height: 1.6; color: var(--muted); }
+
+    /* Stats grid */
+    .stats-grid { display: grid; gap: 16px; margin-bottom: 40px; }
+    .stats-grid.cols-3 { grid-template-columns: repeat(3,1fr); }
+    .stats-grid.cols-4 { grid-template-columns: repeat(2,1fr); }
+    @media(min-width:640px){ .stats-grid.cols-4 { grid-template-columns: repeat(4,1fr); } }
+    .stat-card {
+      border-radius: 16px; padding: 20px; text-align: center;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+    }
+    .stat-value { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .stat-label { font-size: 0.75rem; color: var(--muted); }
+
+    /* Doc card */
+    .doc-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px;
+    }
+    .doc-card h3 { font-weight: 700; font-size: 1rem; margin-bottom: 8px; }
+    .doc-card p { font-size: 0.875rem; line-height: 1.6; margin-bottom: 16px; color: var(--muted); }
+    .doc-links { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .doc-links a { font-size: 0.875rem; display: flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+    .doc-links a:hover { opacity: 0.8; }
+
+    /* Docs search */
+    .docs-search-wrap { position: relative; margin-bottom: 40px; }
+    .docs-search-wrap .search-icon { font-size: 1.1rem; }
+    .docs-kbd {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      font-size: 0.75rem; border-radius: 4px; padding: 2px 6px;
+      background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--card-border);
+    }
+
+    /* Ideas */
+    .ideas-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+    .idea-card {
+      border-radius: 16px; padding: 24px; display: flex; gap: 20px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .idea-card:hover { transform: translateY(-3px); box-shadow: 0 20px 60px rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); }
+    .vote-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+    .vote-btn {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .vote-btn:hover { transform: scale(1.1); }
+    .vote-count { font-size: 0.875rem; font-weight: 700; }
+    .idea-body { flex: 1; min-width: 0; }
+    .idea-title-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .idea-title { font-weight: 700; font-size: 1rem; }
+    .status-badge { border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
+    .idea-desc { font-size: 0.875rem; line-height: 1.6; margin-bottom: 12px; color: var(--muted); }
+    .idea-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .idea-author { font-size: 0.75rem; color: var(--muted); margin-left: auto; }
+
+    /* Community channels */
+    .channel-card { padding: 20px; }
+    .channel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .channel-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .channel-name { font-weight: 600; font-size: 0.875rem; }
+    .channel-members { font-size: 0.75rem; color: var(--muted); }
+    .channel-desc { font-size: 0.875rem; line-height: 1.6; color: var(--muted); }
+    .join-btn {
+      margin-top: 16px; width: 100%; border-radius: 12px; padding: 8px;
+      font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+      border: none;
+    }
+    .join-btn:hover { opacity: 0.8; }
+
+    /* Spotlights */
+    .spotlight-section { margin-bottom: 48px; }
+    .spotlight-section h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; }
+    .spotlight-card { padding: 24px; }
+    .spotlight-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .spotlight-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+      background: rgba(255,255,255,0.05); flex-shrink: 0;
+    }
+    .spotlight-name { font-weight: 700; font-size: 0.875rem; }
+    .spotlight-handle { font-size: 0.75rem; color: var(--muted); }
+    .spotlight-badge { margin-left: auto; border-radius: 9999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
+    .spotlight-text { font-size: 0.875rem; line-height: 1.6; color: var(--muted); }
+
+    /* Join CTA */
+    .join-cta {
+      border-radius: 16px; padding: 40px; text-align: center; overflow: hidden;
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1), rgba(236,72,153,0.08));
+      border: 1px solid rgba(99,102,241,0.2);
+    }
+    .join-cta .big-icon { font-size: 3rem; margin-bottom: 16px; }
+    .join-cta h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; }
+    .join-cta p { font-size: 1rem; max-width: 448px; margin: 0 auto 28px; line-height: 1.7; color: var(--muted); }
+    .join-cta-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+    /* Email notify */
+    .email-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .email-input {
+      border-radius: 12px; padding: 10px 16px; font-size: 0.875rem; outline: none; width: 240px;
+      background: var(--card-bg); border: 1px solid var(--card-border); color: var(--foreground);
+    }
+    .email-input::placeholder { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      Eigen Ecosystem · Live
+    </div>
+    <h1>
+      The intelligence layer<br>
+      <span class="gradient-text">for what comes next.</span>
+    </h1>
+    <p class="hero-desc">
+      Eigen is a living ecosystem of AI agents, open knowledge, and a builder community —
+      all wired together to help you think faster, ship smarter, and stay ahead.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="switchTab('agents')">Explore Agents</button>
+      <button class="btn-secondary" onclick="switchTab('community')">Join the Community</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" id="tab-agents" onclick="switchTab('agents')">⚡ Agents</button>
+    <button class="tab-btn" id="tab-docs" onclick="switchTab('docs')">📖 Docs</button>
+    <button class="tab-btn" id="tab-ideas" onclick="switchTab('ideas')">💡 Ideas</button>
+    <button class="tab-btn" id="tab-community" onclick="switchTab('community')">🌐 Community</button>
+  </div>
+</div>
+
+<!-- TAB CONTENT -->
+<div class="tab-content">
+
+  <!-- AGENTS TAB -->
+  <div class="tab-panel active" id="panel-agents">
+    <div class="section-header">
+      <h2>Agent Directory</h2>
+      <p>Projects and tools built by the Eigen team and EigenTribe builders. Click through to explore, fork, or reach the creator directly.</p>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" id="agent-search" placeholder="Search by name, builder, or tag..." oninput="filterAgents()" />
+    </div>
+
+    <div class="grid-3" id="agents-grid">
+      <!-- Placeholder cards (shown when no real agents) -->
+      <div class="card agent-card placeholder-card" style="opacity:0.4;border-color:rgba(255,255,255,0.04)">
+        <div class="agent-icon" style="background:linear-gradient(135deg,#6366f120,#6366f140);border:1px solid #6366f130">⚡</div>
+        <div><div class="agent-name">Your Agent Here</div><div class="agent-desc">Drop in a real project and it'll show up right here — name, builder, and links included.</div></div>
+        <div class="agent-footer"><span class="agent-builder">by <span style="font-weight:600;color:var(--foreground)">EigenTribe</span></span></div>
+      </div>
+      <div class="card agent-card placeholder-card" style="opacity:0.4;border-color:rgba(255,255,255,0.04)">
+        <div class="agent-icon" style="background:linear-gradient(135deg,#a855f720,#a855f740);border:1px solid #a855f730">🔍</div>
+        <div><div class="agent-name">Your Agent Here</div><div class="agent-desc">Drop in a real project and it'll show up right here — name, builder, and links included.</div></div>
+        <div class="agent-footer"><span class="agent-builder">by <span style="font-weight:600;color:var(--foreground)">EigenTribe</span></span></div>
+      </div>
+      <div class="card agent-card placeholder-card" style="opacity:0.4;border-color:rgba(255,255,255,0.04)">
+        <div class="agent-icon" style="background:linear-gradient(135deg,#10b98120,#10b98140);border:1px solid #10b98130">🛠️</div>
+        <div><div class="agent-name">Your Agent Here</div><div class="agent-desc">Drop in a real project and it'll show up right here — name, builder, and links included.</div></div>
+        <div class="agent-footer"><span class="agent-builder">by <span style="font-weight:600;color:var(--foreground)">EigenTribe</span></span></div>
+      </div>
+    </div>
+
+    <div class="empty-state" id="no-results" style="display:none">
+      <div class="empty-icon">🤖</div>
+      <p id="no-results-text"></p>
+      <button class="clear-btn" onclick="clearSearch()">Clear search</button>
+    </div>
+
+    <div class="cta-banner">
+      <div class="cta-icon">🛠️</div>
+      <h3>Built something with Eigen?</h3>
+      <p>Submit your project and get it listed here — in front of the whole community.</p>
+      <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;font-size:0.875rem">Submit your project →</a>
+    </div>
+  </div>
+
+  <!-- DOCS TAB -->
+  <div class="tab-panel" id="panel-docs">
+    <div class="section-header">
+      <h2>Documentation</h2>
+      <p>Everything you need to deploy, extend, and master Eigen — written for builders, not bureaucrats.</p>
+    </div>
+
+    <div class="docs-search-wrap search-wrap">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" placeholder="Search the docs..." readonly onclick="alert('Full docs search coming soon — hang tight!')" style="max-width:448px;cursor:pointer" />
+      <span class="docs-kbd">⌘K</span>
+    </div>
+
+    <div class="grid-3">
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#6366f120,#6366f140);border:1px solid #6366f130">🚀</div>
+        <h3>Getting Started</h3>
+        <p>Everything you need to go from zero to your first deployed agent in under 15 minutes.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#6366f1">→ Quickstart Guide</a></li>
+          <li><a href="#" style="color:#6366f1">→ Core Concepts</a></li>
+          <li><a href="#" style="color:#6366f1">→ Your First Agent</a></li>
+        </ul>
+      </div>
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#a855f720,#a855f740);border:1px solid #a855f730">🔌</div>
+        <h3>Integrations</h3>
+        <p>Connect Eigen agents to the tools you already use — Slack, Notion, Zapier, and 200+ more.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#a855f7">→ API Reference</a></li>
+          <li><a href="#" style="color:#a855f7">→ Webhooks</a></li>
+          <li><a href="#" style="color:#a855f7">→ OAuth Setup</a></li>
+        </ul>
+      </div>
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#10b98120,#10b98140);border:1px solid #10b98130">🛠️</div>
+        <h3>Build Your Own</h3>
+        <p>Open the hood and build a custom agent using our SDK. Ship it to the EigenTribe marketplace.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#10b981">→ SDK Docs</a></li>
+          <li><a href="#" style="color:#10b981">→ Agent Templates</a></li>
+          <li><a href="#" style="color:#10b981">→ Publish to Marketplace</a></li>
+        </ul>
+      </div>
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#f59e0b20,#f59e0b40);border:1px solid #f59e0b30">🔒</div>
+        <h3>Security & Privacy</h3>
+        <p>Data handling, permissions, SOC 2 compliance, and everything your security team will ask for.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#f59e0b">→ Data Policy</a></li>
+          <li><a href="#" style="color:#f59e0b">→ Permissions Model</a></li>
+          <li><a href="#" style="color:#f59e0b">→ Compliance FAQ</a></li>
+        </ul>
+      </div>
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#ec489920,#ec489940);border:1px solid #ec489930">⚡</div>
+        <h3>Advanced Usage</h3>
+        <p>Multi-agent pipelines, custom memory layers, rate limits, and production best practices.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#ec4899">→ Agent Chaining</a></li>
+          <li><a href="#" style="color:#ec4899">→ Memory & Context</a></li>
+          <li><a href="#" style="color:#ec4899">→ Production Checklist</a></li>
+        </ul>
+      </div>
+      <div class="card doc-card">
+        <div class="doc-icon" style="background:linear-gradient(135deg,#06b6d420,#06b6d440);border:1px solid #06b6d430">📊</div>
+        <h3>Analytics & Logs</h3>
+        <p>Inspect every agent run — inputs, outputs, latency, costs — down to the token level.</p>
+        <ul class="doc-links">
+          <li><a href="#" style="color:#06b6d4">→ Run Logs</a></li>
+          <li><a href="#" style="color:#06b6d4">→ Cost Tracking</a></li>
+          <li><a href="#" style="color:#06b6d4">→ Monitoring Setup</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta-banner" style="margin-top:48px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(168,85,247,0.08));border-color:rgba(99,102,241,0.2)">
+      <div class="cta-icon">📖</div>
+      <h3>Full docs are on the way.</h3>
+      <p>We're writing documentation that's actually worth reading — no fluff, no corporate speak. Drop your email and we'll ping you when it's live.</p>
+      <div class="email-row">
+        <input class="email-input" type="email" placeholder="you@company.com" />
+        <button class="btn-primary" style="font-size:0.875rem;padding:10px 20px">Notify Me</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IDEAS TAB -->
+  <div class="tab-panel" id="panel-ideas">
+    <div class="section-header">
+      <h2>Ideas Board</h2>
+      <p>The best products are built with the people using them. Share what you want to see, vote on what matters, and watch the community shape Eigen's roadmap.</p>
+    </div>
+
+    <div class="stats-grid cols-3">
+      <div class="stat-card"><div class="stat-value">1,200+</div><div class="stat-label">Ideas submitted</div></div>
+      <div class="stat-card"><div class="stat-value">18,000+</div><div class="stat-label">Community votes</div></div>
+      <div class="stat-card"><div class="stat-value">34</div><div class="stat-label">Ideas shipped</div></div>
+    </div>
+
+    <div class="ideas-list">
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">312</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Agent-to-agent handoffs</span>
+            <span class="status-badge" style="color:#f59e0b;background:#f59e0b18">Under Review</span>
+          </div>
+          <p class="idea-desc">Let agents delegate subtasks to each other autonomously — like a real team, without the Slack noise.</p>
+          <div class="idea-meta">
+            <span class="tag">Multi-agent</span><span class="tag">Orchestration</span>
+            <span class="idea-author">🌐 EigenTribe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">289</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Native Notion workspace sync</span>
+            <span class="status-badge" style="color:#6366f1;background:#6366f118">Planned</span>
+          </div>
+          <p class="idea-desc">Sync agent outputs directly into Notion databases without any Zapier middleware.</p>
+          <div class="idea-meta">
+            <span class="tag">Integration</span><span class="tag">Notion</span>
+            <span class="idea-author">⚡ Eigen Team</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">241</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Agent usage analytics dashboard</span>
+            <span class="status-badge" style="color:#34d399;background:#34d39918">In Progress</span>
+          </div>
+          <p class="idea-desc">A single view to track all your running agents — cost, performance, uptime, and ROI.</p>
+          <div class="idea-meta">
+            <span class="tag">Analytics</span><span class="tag">Dashboard</span>
+            <span class="idea-author">🌐 EigenTribe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">198</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Voice interface for agents</span>
+            <span class="status-badge" style="color:#f59e0b;background:#f59e0b18">Under Review</span>
+          </div>
+          <p class="idea-desc">Talk to your agents out loud — perfect for on-the-go queries and hands-free workflows.</p>
+          <div class="idea-meta">
+            <span class="tag">Voice</span><span class="tag">Mobile</span>
+            <span class="idea-author">🌐 EigenTribe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">167</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Shareable agent templates</span>
+            <span class="status-badge" style="color:#6366f1;background:#6366f118">Planned</span>
+          </div>
+          <p class="idea-desc">Export your configured agent as a template so your team — or the whole community — can clone it in one click.</p>
+          <div class="idea-meta">
+            <span class="tag">Templates</span><span class="tag">Sharing</span>
+            <span class="idea-author">⚡ Eigen Team</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-card">
+        <div class="vote-col">
+          <button class="vote-btn">▲</button>
+          <span class="vote-count">143</span>
+        </div>
+        <div class="idea-body">
+          <div class="idea-title-row">
+            <span class="idea-title">Scheduled agent digests</span>
+            <span class="status-badge" style="color:#8b8b9e;background:#8b8b9e18">Considering</span>
+          </div>
+          <p class="idea-desc">Set your agent to email you a summary every morning — market updates, KPIs, overnight alerts.</p>
+          <div class="idea-meta">
+            <span class="tag">Scheduling</span><span class="tag">Email</span>
+            <span class="idea-author">🌐 EigenTribe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-banner" style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(236,72,153,0.06));border-color:rgba(245,158,11,0.2)">
+      <div class="cta-icon">💡</div>
+      <h3>Have an idea? Ship it here.</h3>
+      <p>The best features in Eigen started as a single community suggestion. Your idea could be next.</p>
+      <button class="btn-primary" style="background:linear-gradient(135deg,#f59e0b,#ec4899);box-shadow:0 0 25px rgba(245,158,11,0.2);font-size:0.875rem">Submit Your Idea →</button>
+    </div>
+  </div>
+
+  <!-- COMMUNITY TAB -->
+  <div class="tab-panel" id="panel-community">
+    <div class="section-header">
+      <h2>EigenTribe</h2>
+      <p>A community of builders, researchers, and founders who believe AI should work for you — not the other way around. No hype. Just signal.</p>
+    </div>
+
+    <div class="stats-grid cols-4">
+      <div class="stat-card"><div class="stat-value">14,000+</div><div class="stat-label">Members</div></div>
+      <div class="stat-card"><div class="stat-value">82</div><div class="stat-label">Countries</div></div>
+      <div class="stat-card"><div class="stat-value">600+</div><div class="stat-label">Agents built</div></div>
+      <div class="stat-card"><div class="stat-value">Daily</div><div class="stat-label">Active discussions</div></div>
+    </div>
+
+    <div class="spotlight-section">
+      <h3>Community Channels</h3>
+      <div class="grid-3">
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#6366f120,#6366f140);border:1px solid #6366f130">💬</span>
+            <div><div class="channel-name">General</div><div class="channel-members">4.2k members</div></div>
+          </div>
+          <p class="channel-desc">Day-to-day conversation, intros, and everything in between.</p>
+          <button class="join-btn" style="background:#6366f118;color:#6366f1;border:1px solid #6366f130">Join Channel →</button>
+        </div>
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#a855f720,#a855f740);border:1px solid #a855f730">🤖</span>
+            <div><div class="channel-name">Agent Showcase</div><div class="channel-members">2.8k members</div></div>
+          </div>
+          <p class="channel-desc">Built something with Eigen? Drop it here. The community will actually look at it.</p>
+          <button class="join-btn" style="background:#a855f718;color:#a855f7;border:1px solid #a855f730">Join Channel →</button>
+        </div>
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#10b98120,#10b98140);border:1px solid #10b98130">🧠</span>
+            <div><div class="channel-name">AI Research</div><div class="channel-members">3.1k members</div></div>
+          </div>
+          <p class="channel-desc">Papers, breakthroughs, and hot takes — signal over noise, always.</p>
+          <button class="join-btn" style="background:#10b98118;color:#10b981;border:1px solid #10b98130">Join Channel →</button>
+        </div>
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#f59e0b20,#f59e0b40);border:1px solid #f59e0b30">🛠️</span>
+            <div><div class="channel-name">Build in Public</div><div class="channel-members">1.9k members</div></div>
+          </div>
+          <p class="channel-desc">Ship daily. Share your progress. Get real feedback from people building the same things.</p>
+          <button class="join-btn" style="background:#f59e0b18;color:#f59e0b;border:1px solid #f59e0b30">Join Channel →</button>
+        </div>
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#ec489920,#ec489940);border:1px solid #ec489930">💡</span>
+            <div><div class="channel-name">Feature Requests</div><div class="channel-members">2.3k members</div></div>
+          </div>
+          <p class="channel-desc">Votes, debates, and discussions on what Eigen builds next.</p>
+          <button class="join-btn" style="background:#ec489918;color:#ec4899;border:1px solid #ec489930">Join Channel →</button>
+        </div>
+        <div class="card channel-card">
+          <div class="channel-header">
+            <span class="channel-icon" style="background:linear-gradient(135deg,#06b6d420,#06b6d440);border:1px solid #06b6d430">🎯</span>
+            <div><div class="channel-name">Jobs & Collabs</div><div class="channel-members">1.4k members</div></div>
+          </div>
+          <p class="channel-desc">Find AI-native roles or a co-founder who gets it. No spam, ever.</p>
+          <button class="join-btn" style="background:#06b6d418;color:#06b6d4;border:1px solid #06b6d430">Join Channel →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotlight-section">
+      <h3>Community Spotlights</h3>
+      <div class="grid-3">
+        <div class="card spotlight-card">
+          <div class="spotlight-header">
+            <div class="spotlight-avatar">👩‍💻</div>
+            <div><div class="spotlight-name">Maya R.</div><div class="spotlight-handle">@mayabuilds</div></div>
+            <span class="spotlight-badge" style="color:#6366f1;background:#6366f118">Top Builder</span>
+          </div>
+          <p class="spotlight-text">Built a multi-step legal review agent and open-sourced the template — 340 forks in one week.</p>
+        </div>
+        <div class="card spotlight-card">
+          <div class="spotlight-header">
+            <div class="spotlight-avatar">👨‍🚀</div>
+            <div><div class="spotlight-name">Jordan K.</div><div class="spotlight-handle">@jk_ventures</div></div>
+            <span class="spotlight-badge" style="color:#a855f7;background:#a855f718">Community Star</span>
+          </div>
+          <p class="spotlight-text">Wrote the most-read guide on combining the Deal Flow Agent with Notion — saved 200+ hours across the community.</p>
+        </div>
+        <div class="card spotlight-card">
+          <div class="spotlight-header">
+            <div class="spotlight-avatar">🧑‍🎤</div>
+            <div><div class="spotlight-name">Priya S.</div><div class="spotlight-handle">@priyaonai</div></div>
+            <span class="spotlight-badge" style="color:#ec4899;background:#ec489918">Event Host</span>
+          </div>
+          <p class="spotlight-text">Organized the first EigenTribe hackathon — 80 projects in 48 hours, 3 of which are now in the directory.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="join-cta">
+      <div class="big-icon">🌐</div>
+      <h3>Join 14,000+ builders.</h3>
+      <p>Whether you're here to ship agents, find collaborators, or just stay sharp — EigenTribe is where the smartest AI builders hang out.</p>
+      <div class="join-cta-btns">
+        <button class="btn-primary">Join EigenTribe →</button>
+        <button class="btn-secondary">Browse Discord</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    document.getElementById('panel-' + id).classList.add('active');
+  }
+
+  // Agent data — add real agents here
+  const agents = [];
+
+  function filterAgents() {
+    const q = document.getElementById('agent-search').value.toLowerCase().trim();
+    const grid = document.getElementById('agents-grid');
+    const noResults = document.getElementById('no-results');
+    const placeholders = grid.querySelectorAll('.placeholder-card');
+
+    if (!q) {
+      placeholders.forEach(p => p.style.display = '');
+      noResults.style.display = 'none';
+      return;
+    }
+
+    placeholders.forEach(p => p.style.display = 'none');
+
+    const matched = agents.filter(a =>
+      a.name.toLowerCase().includes(q) ||
+      a.description.toLowerCase().includes(q) ||
+      a.builder.toLowerCase().includes(q) ||
+      (a.tags || []).some(t => t.toLowerCase().includes(q))
+    );
+
+    if (matched.length === 0) {
+      document.getElementById('no-results-text').textContent = 'No results for "' + document.getElementById('agent-search').value + '"';
+      noResults.style.display = 'block';
+    } else {
+      noResults.style.display = 'none';
+    }
+  }
+
+  function clearSearch() {
+    document.getElementById('agent-search').value = '';
+    filterAgents();
+  }
+
+  // Vote buttons
+  document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const countEl = this.nextElementSibling;
+      countEl.textContent = parseInt(countEl.textContent) + 1;
+      this.style.background = 'rgba(99,102,241,0.25)';
+    });
+  });
+</script>
+</body>
+</html>

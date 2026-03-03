@@ -10,6 +10,10 @@ export type Agent = {
   tags: string[];
   status: "live" | "beta" | "coming-soon";
   creator: "Eigen Team" | "EigenTribe";
+  // Replace undefined with the real URL when ready.
+  // linkType: "x" opens an X/Twitter post, "site" opens a standalone website.
+  link?: string;
+  linkType?: "x" | "site";
 };
 
 export const agents: Agent[] = [
@@ -29,6 +33,8 @@ export const agents: Agent[] = [
     tags: ["Research", "Web", "Synthesis"],
     status: "live",
     creator: "Eigen Team",
+    link: undefined,
+    linkType: "site",
   },
   {
     id: "code-architect",
@@ -46,6 +52,8 @@ export const agents: Agent[] = [
     tags: ["Code Review", "Refactor", "CI/CD"],
     status: "live",
     creator: "Eigen Team",
+    link: undefined,
+    linkType: "site",
   },
   {
     id: "deal-flow-agent",
@@ -63,6 +71,8 @@ export const agents: Agent[] = [
     tags: ["Finance", "VC", "Signals"],
     status: "live",
     creator: "EigenTribe",
+    link: undefined,
+    linkType: "x",
   },
   {
     id: "content-engine",
@@ -80,6 +90,8 @@ export const agents: Agent[] = [
     tags: ["Copywriting", "SEO", "Social"],
     status: "live",
     creator: "EigenTribe",
+    link: undefined,
+    linkType: "x",
   },
   {
     id: "ops-oracle",
@@ -97,6 +109,8 @@ export const agents: Agent[] = [
     tags: ["Automation", "Scheduling", "Workflows"],
     status: "live",
     creator: "Eigen Team",
+    link: undefined,
+    linkType: "site",
   },
   {
     id: "customer-compass",
@@ -114,6 +128,8 @@ export const agents: Agent[] = [
     tags: ["Support", "Churn", "Feedback"],
     status: "beta",
     creator: "EigenTribe",
+    link: undefined,
+    linkType: "x",
   },
   {
     id: "legal-lens",
@@ -131,6 +147,8 @@ export const agents: Agent[] = [
     tags: ["Contracts", "Compliance", "Legal"],
     status: "beta",
     creator: "Eigen Team",
+    link: undefined,
+    linkType: "site",
   },
   {
     id: "data-cartographer",
@@ -148,6 +166,8 @@ export const agents: Agent[] = [
     tags: ["SQL", "BI", "Dashboards"],
     status: "beta",
     creator: "EigenTribe",
+    link: undefined,
+    linkType: "x",
   },
   {
     id: "brand-guardian",
@@ -165,5 +185,7 @@ export const agents: Agent[] = [
     tags: ["PR", "Monitoring", "Reputation"],
     status: "coming-soon",
     creator: "Eigen Team",
+    link: undefined,
+    linkType: "site",
   },
 ];

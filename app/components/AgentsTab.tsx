@@ -49,15 +49,37 @@ function CreatorBadge({ creator }: { creator: Agent["creator"] }) {
   );
 }
 
+// X / Twitter SVG icon (monochrome, sized to text)
+function XIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117Z" />
+    </svg>
+  );
+}
+
 function AgentCard({ agent }: { agent: Agent }) {
   const status = statusStyles[agent.status];
+  const hasLink = !!agent.link;
 
-  return (
+  const ctaLabel = () => {
+    if (!hasLink) return "Link coming soon";
+    return agent.linkType === "x" ? "View on X" : "Open Site";
+  };
+
+  const ctaIcon = () => {
+    if (!hasLink) return null;
+    if (agent.linkType === "x") return <XIcon />;
+    return <span>↗</span>;
+  };
+
+  const cardContent = (
     <div
-      className="card-hover rounded-2xl p-6 flex flex-col gap-4"
+      className="card-hover rounded-2xl p-6 flex flex-col gap-4 h-full"
       style={{
         background: "var(--card-bg)",
         border: "1px solid var(--card-border)",
+        cursor: hasLink ? "pointer" : "default",
       }}
     >
       {/* Top row: icon + status */}
@@ -144,25 +166,38 @@ function AgentCard({ agent }: { agent: Agent }) {
       {/* Creator + CTA */}
       <div className="flex items-center justify-between gap-2 mt-auto pt-1">
         <CreatorBadge creator={agent.creator} />
-        <button
-          className="rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 hover:opacity-90"
+        <span
+          className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200"
           style={{
-            background:
-              agent.status === "coming-soon"
-                ? "rgba(255,255,255,0.05)"
-                : `linear-gradient(135deg, ${agent.color}30, ${agent.color}50)`,
-            border: `1px solid ${agent.color}40`,
-            color:
-              agent.status === "coming-soon" ? "var(--muted)" : agent.color,
-            cursor: agent.status === "coming-soon" ? "default" : "pointer",
+            background: hasLink
+              ? `linear-gradient(135deg, ${agent.color}30, ${agent.color}50)`
+              : "rgba(255,255,255,0.04)",
+            border: `1px solid ${hasLink ? agent.color + "40" : "var(--card-border)"}`,
+            color: hasLink ? agent.color : "var(--muted)",
           }}
-          disabled={agent.status === "coming-soon"}
         >
-          {agent.status === "coming-soon" ? "Notify Me" : "Open Agent →"}
-        </button>
+          {ctaIcon()}
+          {ctaLabel()}
+        </span>
       </div>
     </div>
   );
+
+  if (hasLink) {
+    return (
+      <a
+        href={agent.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+        style={{ textDecoration: "none" }}
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return <div>{cardContent}</div>;
 }
 
 export default function AgentsTab() {
